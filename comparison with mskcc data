@@ -1,0 +1,68 @@
+  require(ggplot2)
+  require(ggrepel)
+  m1Name = "FUSCC_Mutated_Sample"
+  m2Name = "MSKCC_Mutated_Sample"
+  m1NameN = "FUSCC_Nonmutated_Sample"
+  m2NameN = "MSKCC_Nonmutated_Sample"
+  P.Vals = "P.Vals"
+  Direction = "Direction" 
+  FDR= "FDR"
+  brca_maf = read.csv("F:/manuscript/brca_all_data.maf", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")
+  brca_group = read.csv("F:/manuscript/brca_annot_v5_group.tsv", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")
+  brca_maf = merge(brca_maf, brca_group, by = "Tumor_Sample_Barcode")
+  brca_all = read.maf(maf = brca_maf)
+  NAC = subsetMaf(brca_all, query = "Group == 'NAC'")
+  Surgery = subsetMaf(brca_all, query = "Group == 'Surgery'")
+  Primary = rbind(NAC, Surgery)
+  m1 = read.maf(maf = Primary)
+  m2 = read.maf(maf = "F:/manuscript/tcga_mskcc/data_mutations_mskcc_primary.maf")
+  m1.gs <- getGeneSummary(x = m1)
+  m2.gs <- getGeneSummary(x = m2)
+  minMut = 0
+  m1.genes = as.character(m1.gs[MutatedSamples >= minMut, Hugo_Symbol])
+  m2.genes = as.character(m2.gs[MutatedSamples >= minMut, Hugo_Symbol])
+  uniqueGenes = read.table("F:/manuscript/tcga_mskcc/msk_fuscc_overlap.maf", header = TRUE , stringsAsFactors = FALSE)
+  uniqueGenes = uniqueGenes$OVERLAP
+  m1.sampleSize = as.numeric(m1@summary[3, summary])
+  m2.sampleSize = as.numeric(m2@summary[3, summary])
+  m1.gs.comGenes = m1.gs[Hugo_Symbol %in% uniqueGenes]
+  #m1.gs.comGenes$NonMutatedSamples  = 
+  m2.gs.comGenes = m2.gs[Hugo_Symbol %in% uniqueGenes]
+  sampleSummary = data.table::data.table(Cohort = c(m1Name, m2Name), SampleSize = c(m1.sampleSize, m2.sampleSize))
+  m.gs.meged = merge(m1.gs.comGenes[, .(Hugo_Symbol, MutatedSamples)], 
+                     m2.gs.comGenes[, .(Hugo_Symbol, MutatedSamples)], 
+                     by = "Hugo_Symbol", all = TRUE)
+  m.gs.meged[is.na(m.gs.meged)] = 0
+  m.gs.meged = as.data.frame(m.gs.meged)
+  fisherTable = c()
+  for (i in 1:nrow(m.gs.meged)) {
+    gene = m.gs.meged[i, 1]
+    m1Mut = m.gs.meged[i, 2]
+    m2Mut = m.gs.meged[i, 3]
+    m1nonMut = m1.sampleSize - m1Mut
+    m2nonMut = m2.sampleSize - m2Mut
+    m1fraction = m1Mut/m1.sampleSize
+    m2fraction = m2Mut/m2.sampleSize
+    xf = fisher.test(matrix(c(m1Mut, m1.sampleSize - m1Mut, m2Mut, m2.sampleSize - m2Mut), byrow = TRUE, nrow = 2), conf.int = TRUE, conf.level = 0.95)
+    pval = xf$p.value
+    or = xf$estimate
+    Direction = ifelse(xf$estimate > 1, -1, 1)
+    ci.up = xf$conf.int[1]
+    ci.low = xf$conf.int[2]
+    tdat = data.table::data.table(Hugo_Symbol = gene, m1Mut, m2Mut, m1nonMut, m2nonMut, m1fraction, m2fraction, pval = pval, Direction = Direction)
+    fisherTable = rbind(fisherTable, tdat)
+  }
+  fisherTable = fisherTable[order(pval)]
+  fisherTable[, `:=`(adjPval, p.adjust(p = pval, method = "fdr"))]
+  colnames(fisherTable)[1:10] = c("Gene_symbol", m1Name, m2Name, m1NameN, m2NameN, "FUSCC_Mutated_Fraction_Primary", "MSKCC_Mutated_Fraction_Primary", "P.Vals", "Direction", "FDR")
+  FUSCC_MSKCC_Mutation_Compare <- fisherTable
+  FUSCC_MSKCC_Mutation_Compare$FDR_1 <- as.factor(ifelse(FUSCC_MSKCC_Mutation_Compare$FDR< 0.05,'FDR < 0.05', 'FDR ≥ 0.05'))
+  FDR_cutoff = as.numeric(fisherTable[11,10])
+  ggplot(data = FUSCC_MSKCC_Mutation_Compare, mapping = aes(x = FUSCC_Mutated_Fraction_Primary, y = MSKCC_Mutated_Fraction_Primary, color=FDR_1 ))+ 
+    geom_point(size = 3) + theme_bw() + xlim(c(0, 0.6)) + ylim(c(0, 0.6)) + 
+    geom_abline(intercept=0,slope=1, linetype="dashed", size = 0.8, color = '#747475') +
+    scale_color_manual(values =c("#DD676A","#76A1C5")) + 
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),   
+          axis.line = element_line(colour = "black")) + 
+    geom_text_repel(data=subset(FUSCC_MSKCC_Mutation_Compare, FDR < FDR_cutoff),aes(label=Gene_symbol),col="black",alpha = 1,size = 3.5)
