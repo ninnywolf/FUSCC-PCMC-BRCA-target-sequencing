@@ -1,0 +1,40 @@
+require(maftools)
+#compare all samples
+{
+brca_group = read.csv("F:/manuscript/brca_annot_v5_group.tsv", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")
+brca_pathwaygene = read.csv("F:/manuscript/pathway_gene.csv", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = ",")
+colnames(brca_pathwaygene) = c('pathway', 'Hugo_Symbol')
+brca_all_data = read.csv("F:/manuscript/brca_all_data.maf", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")
+brca_pathway_maf = merge(brca_all_data, brca_pathwaygene, by = 'Hugo_Symbol', all = TRUE)
+colnames(brca_pathway_maf)[1] = 'Hugo_Symbol_gene'
+colnames(brca_pathway_maf)[414] = 'Hugo_Symbol'
+brca_pathway_maf$Hugo_Symbol[is.na(brca_pathway_maf$Hugo_Symbol)] = "Other"
+brca_pathway_maf = merge(brca_pathway_maf, brca_group)
+brca_primary_pathway_maf = subset(brca_pathway_maf, Group %in% c("NAC", "Surgery"))
+brca_advanced_pathway_maf = subset(brca_pathway_maf, Group %in% c("Advanced", "relapse"))
+mskcc_primary_pathway_maf = read.csv("F:/manuscript/tcga_mskcc/mskcc_primary_pathway_maf.maf", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")  
+mskcc_primary_pathway_maf$Hugo_Symbol[is.na(mskcc_primary_pathway_maf$Hugo_Symbol)] = "Other"
+mskcc_advanced_pathway_maf = read.csv("F:/manuscript/tcga_mskcc/mskcc_advanced_pathway_maf.maf", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")  
+mskcc_advanced_pathway_maf$Hugo_Symbol[is.na(mskcc_advanced_pathway_maf$Hugo_Symbol)] = "Other"
+mycolors = c("#397FB8", "#E21E26", "#984F9F", "#E21E26", "#E21E26", "#EBD71F", "#EBD71F", "#000000")
+names(mycolors) = c("Missense_Mutation", "Nonsense_Mutation", "Splice_Site", "Frame_Shift_Del",
+                    "Frame_Shift_Ins", "In_Frame_Del", "In_Frame_Ins", "Multi_Hit")
+}
+#compare primary samples
+{
+brca_primary_pathway_maf = read.maf(brca_primary_pathway_maf)
+mskcc_primary_pathway_maf = read.maf(mskcc_primary_pathway_maf)
+pathway_primary_mskcc_compare = mafCompare(m1 = brca_primary_pathway_maf, m2 = mskcc_primary_pathway_maf, m1Name = 'FUSCC', m2Name = 'MSKCC', minMut = 1)
+forestPlot(mafCompareRes = pathway_primary_mskcc_compare, pVal = 0.9, color = c('royalblue', 'maroon'), geneFontSize = 0.8)
+#size 6.5*4.0
+coOncoplot(m1 = brca_primary_pathway_maf, m2 = mskcc_primary_pathway_maf, m1Name = 'FUSCC', m2Name = 'MSKCC', removeNonMutated = FALSE, colors = mycolors, genes = c("TP53", "PI3K", "WNT", "RTK-RAS", "HIPPO", "NOTCH", "TGF-Beta", "Cell Cycle", "MYC"))
+}
+#compare advanced samples
+{
+brca_advanced_pathway_maf = read.maf(brca_advanced_pathway_maf)
+mskcc_advanced_pathway_maf = read.maf(mskcc_advanced_pathway_maf)
+pathway_advanced_mskcc_compare = mafCompare(m1 = brca_advanced_pathway_maf, m2 = mskcc_advanced_pathway_maf, m1Name = 'FUSCC', m2Name = 'MSKCC', minMut = 1)
+forestPlot(mafCompareRes = pathway_advanced_mskcc_compare, pVal = 1.1, color = c('royalblue', 'maroon'), geneFontSize = 0.8)
+#size 6.4*3.0\
+coOncoplot(m1 = brca_advanced_pathway_maf, m2 = mskcc_advanced_pathway_maf, m1Name = 'FUSCC', m2Name = 'MSKCC', removeNonMutated = FALSE, colors = mycolors, genes = c("TP53", "PI3K", "HIPPO", "MYC", "WNT", "NOTCH", "Cell Cycle", "RTK-RAS", "TGF-Beta"))
+}
