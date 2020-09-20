@@ -1,0 +1,24 @@
+brca_maf = brca_all_data
+brca_vaf = data.frame(brca_maf$Hugo_Symbol, brca_maf$Tumor_Sample_Barcode, brca_maf$bam_VAF, brca_maf$tumor_f)
+colnames(brca_vaf) = c("Hugo_Symbol", "Tumor_Sample_Barcode", "bam_vaf", "raw_vaf")
+brca_annot_v5 = read.csv("F:/manuscript/brca_annot_v5.tsv", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")
+brca_vaf = merge(brca_annot_v5, brca_vaf, by = "Tumor_Sample_Barcode")
+brca_vaf_top20 = subset(brca_vaf, Hugo_Symbol %in% c("TP53", "PIK3CA", "NF1", "GATA3", "KMT2C", "ARID1A", "KMT2D", "NOTCH1", "APC", "AKT1", "ERBB2", "MAP3K1", "PTEN", "RUNX1", "RYR2", "CDH1", "ATRX", "CREBBP", "MEN1", "DNMT3A"))
+levels = c("TP53", "PIK3CA", "NF1", "GATA3", "KMT2C", "ARID1A", "KMT2D", "NOTCH1", "APC", "AKT1", "ERBB2", "MAP3K1", "PTEN", "RUNX1", "RYR2", "CDH1", "ATRX", "CREBBP", "MEN1", "DNMT3A")
+vaf.list = list()
+k = 0
+for(i in levels){ 
+  k = k + 1
+  temp = subset(brca_vaf, Hugo_Symbol == i)
+  vaf.list[[k]] = temp[,11]
+}
+brca_vaf_top20$Hugo_Symbol = factor(brca_vaf_top20$Hugo_Symbol, levels = c("TP53", "PIK3CA", "NF1", "GATA3", "KMT2C", "ARID1A", "KMT2D", "NOTCH1", "APC", "AKT1", "ERBB2", "MAP3K1", "PTEN", "RUNX1", "RYR2", "CDH1", "ATRX", "CREBBP", "MEN1", "DNMT3A"))
+ggplot(brca_vaf_top20, aes(x = Hugo_Symbol,
+                           y = bam_vaf,
+                           fill = Hugo_Symbol))+
+  geom_violin(alpha = 0.95, width = 1) + 
+  geom_boxplot(width= 1) +
+  theme_bw()+
+  coord_polar()+
+  scale_fill_discrete(c= 80, l= 75)+
+  labs(title = "brca_vaf_top20")
