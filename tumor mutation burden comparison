@@ -1,0 +1,19 @@
+require(ggplot2)
+require(reshape2)
+brca_all = read.csv("F:/manuscript/brca_all_data.maf", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")
+brca_all = read.maf(maf = brca_all, clinicalData = "F:/manuscript/brca_annot_v5_sub.tsv")
+brca_nonsynonymous_count = merge(brca_all@variants.per.sample, brca_all@clinical.data, by ="Tumor_Sample_Barcode", all = TRUE)
+brca_nonsynonymous_count[is.na(brca_nonsynonymous_count)] = 0
+brca_nonsynonymous_count$TMB = round(brca_nonsynonymous_count$Variants/2.134, digits = 1)
+brca_nonsynonymous_count = brca_nonsynonymous_count[,-3]
+brca_TMB = merge(brca_annot_v5, brca_nonsynonymous_count , by = "Tumor_Sample_Barcode")
+brca_TMB_other = which(brca_TMB$FAB_classification != "Other")
+brca_TMB = brca_TMB[brca_TMB_other,]
+brca_TMB$logVariants = log2(brca_TMB$Variants)
+brca_TMB$FAB_classification = factor(brca_TMB$FAB_classification, levels = c("Luminal A", "Luminal B (HER2-)", "Luminal B (HER2+)", "HER2 enriched", "TNBC"))
+ggplot(brca_TMB, aes(x = FAB_classification, y = logVariants), color = FAB_classification) +
+  geom_violin(width = .6) + 
+  geom_boxplot(aes(fill=factor(FAB_classification)), width = .3) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title = element_text(size = 10, color = "blue", face = "bold"),
+        axis.text.x = element_text(size = 8, angle = 45, hjust = 1, vjust = 1, face = "bold"))
