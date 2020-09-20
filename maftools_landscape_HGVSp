@@ -1,3 +1,4 @@
+require(maftools)
 brca_maf = brca_all_data
 brca_HGVSp_Short = paste0(brca_maf$Hugo_Symbol, "(", brca_maf$HGVSp_Short, ")")
 brca_HGVSp_Short_maf = cbind(brca_HGVSp_Short, brca_maf)
