@@ -1,0 +1,13 @@
+require(maftools)
+brca_pathwaygene = read.csv("F:/manuscript/pathway_gene.csv", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = ",")
+colnames(brca_pathwaygene) = c('Pathway', 'Hugo_Symbol')
+TCGA2016 = read.csv("F:/manuscript/tcga_mskcc/data_mutations_tcga_2016.maf", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")
+tcga_pathway_maf = merge(TCGA2016, brca_pathwaygene, by = 'Hugo_Symbol', all = TRUE)
+colnames(tcga_pathway_maf)[1] = 'Hugo_Symbol_gene'
+colnames(tcga_pathway_maf)[81] = 'Hugo_Symbol'
+tcga_pathway_maf$Hugo_Symbol[is.na(tcga_pathway_maf$Hugo_Symbol)] = "Other"
+tcga_pathway_maf = read.maf(tcga_pathway_maf)
+brca_pathway_maf = read.maf(brca_pathway_maf)
+pathway_tcga_compare = mafCompare(m1 = brca_pathway_maf, m2 = tcga_pathway_maf, m1Name = 'FUSCC', m2Name = 'TCGA', minMut = 1)
+forestPlot(mafCompareRes = pathway_tcga_compare, pVal = 1.1, color = c('royalblue', 'maroon'), geneFontSize = 0.8)
+coOncoplot(m1 = brca_pathway_maf, m2 = tcga_pathway_maf, m1Name = 'FUSCC', m2Name = 'TCGA', removeNonMutated = FALSE, colors = mycolors, genes = c("TP53", "RTK-RAS", "WNT", "HIPPO", "NOTCH", "TGF-Beta", "PI3K", "MYC", "Cell Cycle" ))
