@@ -1,4 +1,4 @@
-#maftools_landscape
+require(maftools)
 brca_all = read.maf(maf = brca_all_data, clinicalData = brca_clin)
 fabcolors = RColorBrewer::brewer.pal(n = 6,name = 'Spectral')
 names(fabcolors) = c("LuminalA", "LuminalB_h2_neg", "LuminalB_h2_pos", "TNBC", "HER2", "Other")
