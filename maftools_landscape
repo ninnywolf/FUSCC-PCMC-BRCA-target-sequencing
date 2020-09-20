@@ -1,7 +1,5 @@
 #maftools_landscape
-#data is available upon requirement
-brca_clin = read.csv("F:/manuscript/brca_annot_v5_sub.tsv", header = TRUE , stringsAsFactors = FALSE, comment.char = "#", sep = "\t")
-brca_all = read.maf(maf = brca_add_pik3ca, clinicalData = brca_clin)
+brca_all = read.maf(maf = brca_all_data, clinicalData = brca_clin)
 fabcolors = RColorBrewer::brewer.pal(n = 6,name = 'Spectral')
 names(fabcolors) = c("LuminalA", "LuminalB_h2_neg", "LuminalB_h2_pos", "TNBC", "HER2", "Other")
 fabcolors = list(FAB_classification = fabcolors)
