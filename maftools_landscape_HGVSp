@@ -1,0 +1,18 @@
+brca_maf = brca_all_data
+brca_HGVSp_Short = paste0(brca_maf$Hugo_Symbol, "(", brca_maf$HGVSp_Short, ")")
+brca_HGVSp_Short_maf = cbind(brca_HGVSp_Short, brca_maf)
+colnames(brca_HGVSp_Short_maf)[2] = "Hugo_Symbol_original"
+colnames(brca_HGVSp_Short_maf)[1] = "Hugo_Symbol"
+brca_HGVSp_Short_maf$HGVSp_Short[is.na(brca_HGVSp_Short_maf$HGVSp_Short)] = "hys"
+HGVSp_Short_hys = which(brca_HGVSp_Short_maf$HGVSp_Short != "hys")
+brca_HGVSp_Short_maf = brca_HGVSp_Short_maf[HGVSp_Short_hys,]
+brca_HGVSp_Short_all = read.maf(maf = brca_HGVSp_Short_maf, clinicalData = brca_clin)
+fabcolors = RColorBrewer::brewer.pal(n = 6,name = 'Spectral')
+names(fabcolors) = c("LuminalA", "LuminalB_h2_neg", "LuminalB_h2_pos", "TNBC", "HER2", "Other")
+fabcolors = list(FAB_classification = fabcolors)
+mycolors = c("#397FB8", "#E21E26", "#984F9F", "#E21E26", "#E21E26", "#EBD71F", "#EBD71F", "#000000")
+names(mycolors) = c("Missense_Mutation", "Nonsense_Mutation", "Splice_Site", "Frame_Shift_Del",
+                    "Frame_Shift_Ins", "In_Frame_Del", "In_Frame_Ins", "Multi_Hit")
+oncoplot(maf = brca_HGVSp_Short_all, top = 20, fontSize = 10, clinicalFeatures = 'FAB_classification', removeNonMutated = FALSE, colors = mycolors, drawRowBar = FALSE, sortByAnnotation = TRUE, annotationOrder = c("LuminalA", "LuminalB_h2_neg", "LuminalB_h2_pos", "HER2", "TNBC", "Other"), keepGeneOrder = FALSE, sampleOrder = sample_order, writeMatrix = TRUE)
+#size = 8.0*5.5
+oncoplot(maf = brca_HGVSp_Short_all, top = 20, fontSize = 10, clinicalFeatures = 'FAB_classification', removeNonMutated = FALSE, colors = mycolors, drawRowBar = TRUE, sortByAnnotation = TRUE, annotationOrder = c("LuminalA", "LuminalB_h2_neg", "LuminalB_h2_pos", "HER2", "TNBC", "Other"), keepGeneOrder = FALSE)}
